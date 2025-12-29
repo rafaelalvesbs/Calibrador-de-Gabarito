@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calibrador OMR - 20 Questões (A-E)</title>
+    <title>Calibrador de Coordenadas OMR</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -19,21 +19,19 @@
             const videoRef = useRef(null);
             const canvasRef = useRef(null);
             
-            // Estado das coordenadas
+            // Estado das coordenadas que você vai copiar
             const [coords, setCoords] = useState({
-                startX: 300,
-                startY: 200,
-                gapX: 80,
-                gapY: 40,
-                size: 25
+                startX: 100,
+                startY: 150,
+                gapX: 60,
+                gapY: 45,
+                size: 20
             });
 
             useEffect(() => {
                 navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } 
-                }).then(stream => {
-                    if (videoRef.current) videoRef.current.srcObject = stream;
-                });
+                    video: { facingMode: "environment", width: { ideal: 1280 } } 
+                }).then(stream => videoRef.current.srcObject = stream);
                 
                 const render = () => {
                     drawGrid();
@@ -44,23 +42,16 @@
 
             const drawGrid = () => {
                 if (!videoRef.current || !canvasRef.current) return;
-                const video = videoRef.current;
-                const canvas = canvasRef.current;
-                const ctx = canvas.getContext('2d');
-
-                if (video.videoWidth > 0) {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                }
+                const ctx = canvasRef.current.getContext('2d');
+                canvasRef.current.width = videoRef.current.videoWidth;
+                canvasRef.current.height = videoRef.current.videoHeight;
                 
-                ctx.drawImage(video, 0, 0);
+                ctx.drawImage(videoRef.current, 0, 0);
 
-                // Desenha a grade de 20x5 (A, B, C, D, E)
+                // Desenha a grade de 10x3 (A, B, C)
                 ctx.lineWidth = 2;
-                const alternativas = ['A', 'B', 'C', 'D', 'E'];
-                
-                for (let q = 0; q < 20; q++) {
-                    alternativas.forEach((opt, i) => {
+                for (let q = 0; q < 10; q++) {
+                    ['A', 'B', 'C'].forEach((opt, i) => {
                         const x = coords.startX + (i * coords.gapX);
                         const y = coords.startY + (q * coords.gapY);
                         
@@ -68,10 +59,10 @@
                         ctx.strokeStyle = "#00FF00";
                         ctx.strokeRect(x, y, coords.size, coords.size);
                         
-                        // Legendas para orientação (Primeira e última linha)
-                        if(q === 0 || q === 19) {
+                        // Desenha a legenda da coordenada apenas no primeiro e último
+                        if(q === 0 || q === 9) {
                             ctx.fillStyle = "#00FF00";
-                            ctx.font = "bold 12px Monospace";
+                            ctx.font = "10px Monospace";
                             ctx.fillText(`${opt}${q+1}`, x, y - 5);
                         }
                     });
@@ -79,68 +70,60 @@
             };
 
             return (
-                <div className="flex flex-col h-screen">
+                <div class="flex flex-col h-screen">
                     {/* Área da Câmera */}
-                    <div className="relative flex-1 bg-black overflow-hidden">
-                        <video ref={videoRef} autoPlay playsInline className="absolute w-full h-full object-contain" />
-                        <canvas ref={canvasRef} className="absolute w-full h-full object-contain" />
+                    <div class="relative flex-1 bg-black overflow-hidden">
+                        <video ref={videoRef} autoPlay playsInline class="absolute w-full h-full object-contain" />
+                        <canvas ref={canvasRef} class="absolute w-full h-full object-contain" />
                     </div>
 
                     {/* Painel de Calibração */}
-                    <div className="bg-gray-800 p-4 border-t border-gray-700 shadow-2xl overflow-y-auto max-h-64">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="space-y-3">
+                    <div class="bg-gray-800 p-6 border-t border-gray-700 shadow-2xl">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="space-y-4">
                                 <div>
-                                    <label className="flex justify-between text-[10px] font-bold text-blue-400 mb-1">
-                                        EIXO X INICIAL: <span>{coords.startX}px</span>
+                                    <label class="flex justify-between text-xs font-bold text-blue-400 mb-1">
+                                        EIXO X INICIAL (startX): <span>{coords.startX}px</span>
                                     </label>
-                                    <input type="range" min="0" max="1200" value={coords.startX} 
-                                        onChange={e => setCoords({...coords, startX: parseInt(e.target.value)})} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                                    <input type="range" min="0" max="1000" value={coords.startX} 
+                                        onChange={e => setCoords({...coords, startX: parseInt(e.target.value)})} class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
                                 </div>
                                 <div>
-                                    <label className="flex justify-between text-[10px] font-bold text-blue-400 mb-1">
-                                        EIXO Y INICIAL: <span>{coords.startY}px</span>
+                                    <label class="flex justify-between text-xs font-bold text-blue-400 mb-1">
+                                        EIXO Y INICIAL (startY): <span>{coords.startY}px</span>
                                     </label>
-                                    <input type="range" min="0" max="1200" value={coords.startY} 
-                                        onChange={e => setCoords({...coords, startY: parseInt(e.target.value)})} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-                                </div>
-                                <div>
-                                    <label className="flex justify-between text-[10px] font-bold text-orange-400 mb-1">
-                                        TAMANHO DO QUADRADO: <span>{coords.size}px</span>
-                                    </label>
-                                    <input type="range" min="5" max="100" value={coords.size} 
-                                        onChange={e => setCoords({...coords, size: parseInt(e.target.value)})} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                                    <input type="range" min="0" max="1000" value={coords.startY} 
+                                        onChange={e => setCoords({...coords, startY: parseInt(e.target.value)})} class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
                                 </div>
                             </div>
 
-                            <div className="space-y-3">
+                            <div class="space-y-4">
                                 <div>
-                                    <label className="flex justify-between text-[10px] font-bold text-green-400 mb-1">
-                                        DISTÂNCIA X (A-E): <span>{coords.gapX}px</span>
+                                    <label class="flex justify-between text-xs font-bold text-green-400 mb-1">
+                                        DISTÂNCIA ENTRE A-B-C (gapX): <span>{coords.gapX}px</span>
                                     </label>
-                                    <input type="range" min="10" max="300" value={coords.gapX} 
-                                        onChange={e => setCoords({...coords, gapX: parseInt(e.target.value)})} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                                    <input type="range" min="10" max="200" value={coords.gapX} 
+                                        onChange={e => setCoords({...coords, gapX: parseInt(e.target.value)})} class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
                                 </div>
                                 <div>
-                                    <label className="flex justify-between text-[10px] font-bold text-green-400 mb-1">
-                                        DISTÂNCIA Y (Questões): <span>{coords.gapY}px</span>
+                                    <label class="flex justify-between text-xs font-bold text-green-400 mb-1">
+                                        DISTÂNCIA ENTRE QUESTÕES (gapY): <span>{coords.gapY}px</span>
                                     </label>
-                                    <input type="range" min="10" max="300" value={coords.gapY} 
-                                        onChange={e => setCoords({...coords, gapY: parseInt(e.target.value)})} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                                    <input type="range" min="10" max="200" value={coords.gapY} 
+                                        onChange={e => setCoords({...coords, gapY: parseInt(e.target.value)})} class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
                                 </div>
                             </div>
                         </div>
 
                         {/* Bloco de Código para Copiar */}
-                        <div className="bg-black p-3 rounded border border-gray-600 font-mono text-xs">
-                            <p className="text-gray-500 mb-1">// Copie para a CONFIG do seu scanner:</p>
-                            <div className="text-yellow-400">
-                                <span>const startX = {coords.startX};</span><br/>
-                                <span>const startY = {coords.startY};</span><br/>
-                                <span>const gapX = {coords.gapX};</span><br/>
-                                <span>const gapY = {coords.gapY};</span><br/>
-                                <span>const size = {coords.size};</span>
-                            </div>
+                        <div class="bg-black p-4 rounded-lg border border-gray-600 font-mono text-sm">
+                            <p class="text-gray-500 mb-2">// Copie estes valores para o seu código principal:</p>
+                            <p class="text-yellow-400 italic">
+                                const startX = {coords.startX};<br/>
+                                const startY = {coords.startY};<br/>
+                                const gapX = {coords.gapX};<br/>
+                                const gapY = {coords.gapY};
+                            </p>
                         </div>
                     </div>
                 </div>
